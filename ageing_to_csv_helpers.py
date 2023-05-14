@@ -30,7 +30,7 @@ def getClientStatus(finalDataFrame, fromIndex):
 def insertCsvHeader(csv_df):
     new_row = {'A': 'Run Date', 
         'B': 'Advisor ID', 
-        'C': 'advisor', 
+        'C': 'Advisor', 
         'D': 'Account Number', 
         'E': 'Client Name', 
         'F': 'Client Status', 

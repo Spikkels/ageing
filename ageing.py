@@ -5,6 +5,7 @@ from pathlib import Path
 import logging
 import timeit
 import warnings
+import os
 warnings.filterwarnings("ignore")
 
 from ageing_helpers import *
@@ -21,6 +22,7 @@ class Ageing:
         self.NegativeValuesTab = pd.DataFrame()
         self.excel_file_path = ''
         self.excel_file_path_output = ''
+        self.csv_file_path_output = ''
         self.csv_df = pd.DataFrame(columns=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])
 
     def modifyAndAppendHeader(self, headerEndLine = 2):
@@ -146,7 +148,8 @@ class Ageing:
     def importFile(self, _excelFilePath):
         ### Convert path to for any OS
         self.excel_file_path = Path(_excelFilePath)
-        self.excel_file_path_output = Path(_excelFilePath + '_output.xlsx')
+        self.excel_file_path_output = Path(self.excel_file_path.stem + '_output.xlsx')
+        self.csv_file_path_output = Path(self.excel_file_path.stem + '_output.csv')
         
         ### Import excel file
         readExcelFile = pd.read_excel(self.excel_file_path, header=None)
@@ -188,7 +191,8 @@ class Ageing:
 
     def printFinalDataFrameDataFrameToFile(self):
         ### Create a Pandas Excel writer using XlsxWriter as the engine.
-        writer = pd.ExcelWriter((self.excel_file_path_output), engine='xlsxwriter')
+        path = self.specifyOutputFolder(self.excel_file_path_output, 'EXCEL_OUTPUT')
+        writer = pd.ExcelWriter(path, engine='xlsxwriter')
 
         firstTabName = self.originalDataFrame.at[2, 'B']
         
@@ -224,7 +228,6 @@ class Ageing:
 
         ### Get list of index numbers where each new data block starts
         self.toIndex = self.finalDataFrame.loc[self.finalDataFrame['A'].isnull(), 'A'].index.tolist()
-        print(self.toIndex)
 
         ### Reverse list so that the first entries can be popped
         self.toIndex.reverse()
@@ -232,20 +235,12 @@ class Ageing:
         toIndex = -1
 
         while (len(self.toIndex) != 2):
-
             toIndex = self.toIndex.pop()
-            print(toIndex, fromIndex)
 
             clientNumber = self.finalDataFrame.at[fromIndex + 1, 'A']
             clientName = self.finalDataFrame.at[fromIndex + 1, 'B']
             clientStatus = getClientStatus(self.finalDataFrame, fromIndex)
-
-            print(clientNumber)
-            print(clientName)
-            print(clientStatus)
-
             workDataFrame = self.finalDataFrame.loc[(fromIndex) + 2:(toIndex- 1)]
-
 
             for index, row in workDataFrame.iterrows():
 
@@ -277,25 +272,40 @@ class Ageing:
             fromIndex = toIndex
         
         self.csv_df = self.csv_df.append(rows, ignore_index=True)
-        print(self.csv_df)
-        # self.finalDataFrame = self.finalDataFrame.append(self.workDataFrame)        
-
+        
 
     def exportToCsv(self):
-        self.finalDataFrame.to_csv(self.csv_file_path_output, index=False)
+        # save the CSV file in the new folder
+        path = self.specifyOutputFolder(self.csv_file_path_output, 'CSV_OUTPUT')
+        self.csv_df.to_csv(path, index=False, header=False)  
 
+
+    def specifyOutputFolder(self, filepath, folderName):
+        '''
+        If no folder name is given then the current working directory is used
+        '''
+        # create the new folder
+        new_folder_path = os.path.join(os.path.dirname(filepath), folderName)
+        os.makedirs(new_folder_path, exist_ok=True)
+
+        # create the path to the CSV file inside the new folder
+        csv_file_name = os.path.basename(filepath)
+        csv_file_path_in_new_folder = os.path.join(new_folder_path, csv_file_name)
+        return csv_file_path_in_new_folder
+        
 
 ### Uncomment to test code without GUI
 
 # Ageing = Ageing()
 # Ageing.importFile("deon b aa 31jul22.xlsx")
-# # start = timeit.default_timer()
+# start = timeit.default_timer()
 # Ageing.modifyAndAppendHeader()
 # Ageing.processAging()
 # Ageing.processFinalTotal('final')
+# Ageing.processFinalTotal('negative')
+# Ageing.printFinalDataFrameDataFrameToFile()
 # Ageing.ageingToCsvFormat()
-# # Ageing.processFinalTotal('negative')
-# # stop = timeit.default_timer()
-# # Ageing.printFinalDataFrameDataFrameToFile()
-# # print('Time: ', stop - start)
+# Ageing.exportToCsv()
+# stop = timeit.default_timer()
+# print('Time: ', stop - start)
 

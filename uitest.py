@@ -140,9 +140,12 @@ class Worker(QObject):
                 ageing1.processFinalTotal('final')
                 ageing1.processFinalTotal('negative')
                 
-                self.progress.emit(f'{row}, Exporting File...')
+                self.progress.emit(f'{row}, Exporting XLSX...')
                 ageing1.printFinalDataFrameDataFrameToFile()
-
+                self.progress.emit(f'{row}, Creating CSV...')
+                ageing1.ageingToCsvFormat()
+                self.progress.emit(f'{row}, Exporting CSV...')
+                ageing1.exportToCsv()
                 self.progress.emit(f'{row}, Completed')
             except:
                 self.progress.emit(f'{row}, Failed')
