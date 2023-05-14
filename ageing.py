@@ -302,7 +302,7 @@ class Ageing:
 ### Uncomment to test code without GUI
 
 # Ageing = Ageing()
-# Ageing.importFile("test\deon b aa 31jul22.xlsx")
+# Ageing.importFile("test.xlsx")
 # start = timeit.default_timer()
 # Ageing.modifyAndAppendHeader()
 # Ageing.processAging()
