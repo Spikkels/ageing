@@ -20,7 +20,7 @@ class Ageing:
         self.workDataFrame = pd.DataFrame()
         self.finalDataFrame = pd.DataFrame()
         self.NegativeValuesTab = pd.DataFrame()
-        self.excel_file_path = ''
+        self.import_file_path = ''
         self.excel_file_path_output = ''
         self.csv_file_path_output = ''
         self.csv_df = pd.DataFrame(columns=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])
@@ -147,12 +147,12 @@ class Ageing:
         
     def importFile(self, _excelFilePath):
         ### Convert path to for any OS
-        self.excel_file_path = Path(_excelFilePath)
-        self.excel_file_path_output = Path(self.excel_file_path.stem + '_output.xlsx')
-        self.csv_file_path_output = Path(self.excel_file_path.stem + '_output.csv')
+        self.import_file_path = Path(_excelFilePath)
+        self.excel_file_path_output = Path(_excelFilePath + '_output.xlsx')
+        self.csv_file_path_output = Path(_excelFilePath + '_output.csv')
         
         ### Import excel file
-        readExcelFile = pd.read_excel(self.excel_file_path, header=None)
+        readExcelFile = pd.read_excel(self.import_file_path, header=None)
         self.originalDataFrame = self.originalDataFrame.append(readExcelFile)
         self.originalDataFrame = self.originalDataFrame.rename(columns = {0 : 'A',
                                                                           1 : 'B',
@@ -280,24 +280,29 @@ class Ageing:
         self.csv_df.to_csv(path, index=False, header=False)  
 
 
-    def specifyOutputFolder(self, filepath, folderName):
+    def specifyOutputFolder(self, filepath, folderName=None):
         '''
         If no folder name is given then the current working directory is used
         '''
-        # create the new folder
-        new_folder_path = os.path.join(os.path.dirname(filepath), folderName)
-        os.makedirs(new_folder_path, exist_ok=True)
+        file_path = Path(filepath)
+        if folderName is None:
+            # if no folder name is specified, use the current working directory
+            new_folder_path = file_path.parent
+        else:
+            # create the new folder
+            new_folder_path = file_path.parent / folderName
+            os.makedirs(new_folder_path, exist_ok=True)
 
         # create the path to the CSV file inside the new folder
-        csv_file_name = os.path.basename(filepath)
-        csv_file_path_in_new_folder = os.path.join(new_folder_path, csv_file_name)
-        return csv_file_path_in_new_folder
+        csv_file_name = file_path.name
+        csv_file_path_in_new_folder = new_folder_path / csv_file_name
+        return str(csv_file_path_in_new_folder)
         
 
 ### Uncomment to test code without GUI
 
 # Ageing = Ageing()
-# Ageing.importFile("deon b aa 31jul22.xlsx")
+# Ageing.importFile("test\deon b aa 31jul22.xlsx")
 # start = timeit.default_timer()
 # Ageing.modifyAndAppendHeader()
 # Ageing.processAging()
