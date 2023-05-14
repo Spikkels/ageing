@@ -545,6 +545,7 @@ class Ageing:
         self.NegativeValuesTab = pd.DataFrame()
         self.excel_file_path = ''
         self.excel_file_path_output = ''
+        self.csv_df = pd.DataFrame(columns=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])
 
     def modifyAndAppendHeader(self, headerEndLine = 2):
         self.headerEndLine = headerEndLine
@@ -737,6 +738,116 @@ class Ageing:
         writer.save()
 
 
+    def getRunDate(self):
+        runDate = self.originalDataFrame.at[0, 'C']
+        return runDate
+
+    def getAdvisorId(self):
+        advisorId: float = self.finalDataFrame.at[0, 'K']
+        return str(int(advisorId))
+
+    def getAdvisorName(self):
+        advisorName: str = self.finalDataFrame.at[2, 'B']
+        return advisorName
+    
+    def getClientStatus(self, fromIndex):
+        clientStatus: str = self.finalDataFrame.at[fromIndex + 1, 'C']
+
+        try:
+            clientStatus = clientStatus.split(":")[1].strip()
+        except:
+            pass
+        return clientStatus
+
+    def insertCsvHeader(self):
+        new_row = {'A': 'Run Date', 
+            'B': 'Advisor ID', 
+            'C': 'advisor', 
+            'D': 'Account Number', 
+            'E': 'Client Name', 
+            'F': 'Client Status', 
+            'G': 'Transaction Date', 
+            'H': 'Transaction Details', 
+            'I': 'Total', 
+            'J': 'Current', 
+            'K': '31 To 60 Days', 
+            'L': '61 To 90', 
+            'M': '91 To 120', 
+            'N': 'Over 120 Days'}
+        self.csv_df = self.csv_df.append(new_row, ignore_index=True)
+
+        
+    def ageingToCsvFormat(self):  
+        self.insertCsvHeader()
+        
+        rows = []
+        run_date = self.getRunDate()
+        advisor_id = self.getAdvisorId()
+        advisor_name = self.getAdvisorName()      
+
+        ### Get list of index numbers where each new data block starts
+        self.toIndex = self.finalDataFrame.loc[self.finalDataFrame['A'].isnull(), 'A'].index.tolist()
+        print(self.toIndex)
+
+        ### Reverse list so that the first entries can be popped
+        self.toIndex.reverse()
+        fromIndex = self.headerEndLine
+        toIndex = -1
+
+        while (len(self.toIndex) != 2):
+
+            toIndex = self.toIndex.pop()
+            print(toIndex, fromIndex)
+
+            clientNumber = self.finalDataFrame.at[fromIndex + 1, 'A']
+            clientName = self.finalDataFrame.at[fromIndex + 1, 'B']
+            clientStatus = self.getClientStatus(fromIndex)
+
+            print(clientNumber)
+            print(clientName)
+            print(clientStatus)
+
+            workDataFrame = self.finalDataFrame.loc[(fromIndex) + 2:(toIndex- 1)]
+
+
+            for index, row in workDataFrame.iterrows():
+
+                transactionDate = row['B']
+                transaction_details = row['D']
+                total = row['E']
+                current = row['F']
+                age_31_to_60 = row['G']
+                age_61_to_90 = row['H']
+                age_91_to_120 = row['I']
+                age_over_120 = row['J']
+
+                new_row = {'A': run_date, 
+                           'B': advisor_id, 
+                           'C': advisor_name, 
+                           'D': clientNumber, 
+                           'E': clientName, 
+                           'F': clientStatus, 
+                           'G': transactionDate, 
+                           'H': transaction_details, 
+                           'I': total, 'J': current, 
+                           'K': age_31_to_60, 
+                           'L': age_61_to_90, 
+                           'M': age_91_to_120, 
+                           'N': age_over_120}
+                rows.append(new_row)
+
+
+            fromIndex = toIndex
+        
+        self.csv_df = self.csv_df.append(rows, ignore_index=True)
+        print(self.csv_df)
+        # self.finalDataFrame = self.finalDataFrame.append(self.workDataFrame)        
+
+    def exportToCsv(self):
+        self.finalDataFrame.to_csv(self.csv_file_path_output, index=False)
+
+
+
 ### Uncomment to test code without GUI
 
 # Ageing = Ageing()
@@ -745,6 +856,7 @@ class Ageing:
 # Ageing.modifyAndAppendHeader()
 # Ageing.processAging()
 # Ageing.processFinalTotal('final')
+# Ageing.ageingToCsvFormat()
 # Ageing.processFinalTotal('negative')
 # # stop = timeit.default_timer()
 # Ageing.printFinalDataFrameDataFrameToFile()

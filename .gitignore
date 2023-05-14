@@ -2,7 +2,8 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
 ## xlsx files
- .xlsx
+**data/
+**/myenv/Scripts/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
